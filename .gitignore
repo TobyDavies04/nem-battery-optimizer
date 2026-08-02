@@ -1,0 +1,22 @@
+# Data (raw NEMWEB pulls can be large; keep out of git)
+data/raw/
+data/*.csv
+data/*.parquet
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Outputs
+plots/*.png
+plots/*.html
+!plots/.gitkeep
