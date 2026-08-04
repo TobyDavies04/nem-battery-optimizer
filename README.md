@@ -43,6 +43,31 @@ source .venv/bin/activate   # or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
 ```
 
+## Getting data
+
+`src/data_fetch.py` pulls AEMO's aggregated price & demand CSVs (one file per
+region per month) and caches them locally as parquet under `data/raw/`.
+
+Run the built-in smoke test first to confirm the AEMO URL scheme still works
+before doing a bigger historical pull:
+
+```bash
+python src/data_fetch.py
+```
+
+Then, in a notebook or script:
+
+```python
+from src.data_fetch import fetch_range
+
+df = fetch_range("VIC", "2023-01", "2024-12")
+```
+
+If the smoke test fails with a non-200 status, AEMO has likely changed the
+URL scheme — check the
+[aggregated price and demand data page](https://aemo.com.au/energy-systems/electricity/national-electricity-market-nem/data-nem/aggregated-data)
+and update `BASE_URL` in `src/data_fetch.py`. Nothing else needs to change.
+
 ## Status
 
-🚧 Phase 1 in progress.
+🚧 Phase 1 in progress — data fetching module done. Next: battery LP model (`src/battery_lp.py`).
