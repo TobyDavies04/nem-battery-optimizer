@@ -1,6 +1,7 @@
 pandas
 numpy
-pulp
+pulp>=4.0
+highspy
 matplotlib
 plotly
 requests
