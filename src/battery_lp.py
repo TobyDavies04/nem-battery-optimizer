@@ -85,12 +85,9 @@ def solve_day(day_prices: pd.DataFrame, spec: BatterySpec, solver_msg: bool = Fa
 
     model = pulp.LpProblem("battery_arbitrage_day", pulp.LpMaximize)
 
-    # NOTE: PuLP 4.x (Rust-core rewrite) creates variables via the LpProblem
-    # instance rather than pulp.LpVariable.dicts(...) directly — the old
-    # classmethod no longer exists.
-    charge = model.add_variable_dicts("charge", idx, lowBound=0, upBound=spec.p_max_mw)
-    discharge = model.add_variable_dicts("discharge", idx, lowBound=0, upBound=spec.p_max_mw)
-    soc = model.add_variable_dicts("soc", idx, lowBound=spec.soc_min_mwh, upBound=spec.soc_max_mwh)
+    charge = pulp.LpVariable.dicts("charge", idx, lowBound=0, upBound=spec.p_max_mw)
+    discharge = pulp.LpVariable.dicts("discharge", idx, lowBound=0, upBound=spec.p_max_mw)
+    soc = pulp.LpVariable.dicts("soc", idx, lowBound=spec.soc_min_mwh, upBound=spec.soc_max_mwh)
 
     # Objective: revenue from discharging minus cost of charging.
     model += pulp.lpSum(
@@ -112,14 +109,10 @@ def solve_day(day_prices: pd.DataFrame, spec: BatterySpec, solver_msg: bool = Fa
     # "bank" free stored energy across the solve-window edge.
     model += soc[n - 1] == spec.soc_init_mwh
 
-    # NOTE: PuLP 4.x no longer bundles CBC. HiGHS (installed via `pip install
-    # highspy`) is the solver backend here — open-source (MIT), and solve
-    # status is now returned by .solve() rather than read off model.status.
-    solver = pulp.getSolver("HiGHS", msg=solver_msg)
-    result = model.solve(solver)
+    model.solve(pulp.PULP_CBC_CMD(msg=solver_msg))
 
-    if result.status != pulp.LpSolveStatus.Optimal:
-        raise RuntimeError(f"LP did not solve to optimality: status={result.status.name}")
+    if pulp.LpStatus[model.status] != "Optimal":
+        raise RuntimeError(f"LP did not solve to optimality: status={pulp.LpStatus[model.status]}")
 
     charge_vals = np.array([charge[t].value() for t in idx])
     discharge_vals = np.array([discharge[t].value() for t in idx])
